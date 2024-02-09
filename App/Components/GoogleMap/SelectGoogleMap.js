@@ -1,0 +1,421 @@
+import {
+    Pressable,
+    StyleSheet,
+    Text,
+    View,
+    TextInput,
+    Image,
+    Modal,
+    Platform,
+    ActivityIndicator,
+    ScrollView,
+    Dimensions,
+} from 'react-native';
+import React, { useState } from 'react';
+import MapView, { Marker, Overlay } from 'react-native-maps';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import AntDesign from 'react-native-vector-icons/AntDesign';
+import EvilIcons from 'react-native-vector-icons/EvilIcons';
+import Geolocation from '@react-native-community/geolocation';
+import { useEffect } from 'react';
+// import { } from 'react-native-paper';
+import Geocoder from 'react-native-geocoding';
+import GoogleSearch from './GoogleSearch';
+import { moderateScale } from '../../Constants/PixelRatio';
+import { Icon, StatusBar } from 'react-native-basic-elements';
+import { FONTS } from '../../Constants/Fonts';
+import { COLORS } from '../../Constants/Colors';
+const { height, width } = Dimensions.get('window')
+
+const SelectGoogleMap = ({
+    changeAddress = () => { },
+    onClose = () => { },
+    changeLongLat = () => { },
+    SearchField =() => { }
+}) => {
+    const [LoderStatus, setLoderStatus] = useState(false);
+    const [modalVisible, setModalVisible] = useState(false);
+    const [Reigoin, setReigoin] = useState({
+        // latitude: 37.78825,
+        // longitude: -122.4324,
+        // latitudeDelta: 0.0922,
+        // longitudeDelta: 0.0421,
+    });
+    const [Address, setAddress] = useState('');
+    async function sendLocation() {
+        Geolocation.getCurrentPosition(info => {
+            setReigoin({
+                latitude: info.coords.latitude,
+                longitude: info.coords.longitude,
+                latitudeDelta: 0.01,
+                longitudeDelta: 0.01,
+            });
+        });
+    }
+    function submitAddress() {
+        // latLong(Reigoin)
+        changeAddress(Address);
+        onClose();
+        changeLongLat(Reigoin);
+    }
+    useEffect(() => {
+        Geocoder.init("AIzaSyC-ki3ImgxYzo8K2OCH9yDthHWIWV1yfj4")
+        sendLocation();
+
+    }, []);
+    async function SearchField(address) {
+        setLoderStatus(true);
+        console.log('address', address);
+        fetch(
+            `https://maps.googleapis.com/maps/api/place/findplacefromtext/json?input=${address}&inputtype=textquery&fields=formatted_address%2Cname%2Crating%2Copening_hours%2Cgeometry&key=AIzaSyC-ki3ImgxYzo8K2OCH9yDthHWIWV1yfj4`,
+        )
+            .then(response => response.json())
+            .then(res => {
+                console.log(address, JSON.stringify(res));
+                // setAllFilds(res.predictions)
+                setLoderStatus(false);
+                setReigoin({
+                    latitude: res.candidates[0].geometry.location.lat,
+                    longitude: res.candidates[0].geometry.location.lng,
+                    latitudeDelta: 0.0922,
+                    longitudeDelta: 0.0421,
+                });
+            })
+            .catch(e => console.log(e));
+    }
+
+    useEffect(() => {
+        // fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${Reigoin.latitude},${Reigoin.longitude}&key=AIzaSyC-ki3ImgxYzo8K2OCH9yDthHWIWV1yfj4`)
+        // fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=37.78825,-122.4324&key=AIzaSyC-ki3ImgxYzo8K2OCH9yDthHWIWV1yfj4`)
+        setAddress('');
+        Geocoder.from({
+            latitude: Reigoin.latitude,
+            longitude: Reigoin.longitude,
+        })
+            .then(a => {
+                console.log('aaa', JSON.stringify(a));
+                console.log('aaa', a.results[0].formatted_address);
+                setAddress(a.results[0].formatted_address);
+                // fetch(`${a.url}`).then(res => console.log('address', res))
+            })
+            // .then((response) => response.json())
+            // .then((data) => console.log('ddd', data))
+            .catch(e => console.log(e));
+    }, [Reigoin]);
+    return (
+        <View style={{
+            flex: 1
+        }}>
+           
+            {Reigoin.latitude && Reigoin?.longitude ? (
+                <View
+                    style={{
+                        flex: 1,
+                    }}>
+                     <StatusBar
+                        backgroundColor={'transparent'}
+                        barStyle={'dark-content'}
+                        translucent={false}
+                    />
+
+                    {/* <Pressable
+              style={{
+                width: '90%',
+                height: 50,
+                backgroundColor: '#fff',
+                alignSelf: 'center',
+                position: 'absolute',
+                zIndex: 139,
+  
+                elevation: 4,
+                paddingHorizontal: 15,
+                flexDirection: 'row',
+                alignItems: 'center',
+                borderRadius: 50,
+                marginTop: Platform.OS == 'ios' ? 40 : 50,
+              }}>
+              <Pressable
+                onPress={() => onClose()}
+                style={{
+                  height: 50,
+                  width: 40,
+                  // alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                <AntDesign name="arrowleft" size={24} color="#333" />
+              </Pressable>
+              <Pressable
+                onPress={() => {
+                  setModalVisible(true);
+                }}
+                style={{
+                  flex: 1,
+                  flexDirection: 'row',
+                }}>
+                <Text
+                  style={{
+                    color: '#999',
+                    fontSize: 17,
+                    fontWeight: '500',
+                    flex: 1,
+                  }}>
+                  Search a Place
+                </Text>
+                <AntDesign name="search1" size={24} color="#333" />
+              </Pressable>
+            </Pressable> */}
+
+                   
+                        {/* <View
+                            style={{
+                               
+                               
+                                alignItems: 'center',
+                                height: moderateScale(45),
+                                backgroundColor:'#f0f0f0',
+                                position:'absolute',
+                               bottom:1000
+
+                                // elevation: 1,
+                            }}>
+                            <AntDesign
+                                name="back"
+                                color={'#000'}
+                                onPress={() => {
+                                    setModalVisible(true);
+                                }}
+                                style={{
+                                    marginLeft: 10,
+                                }}
+                                size={26}
+                            />
+
+
+                        </View>  */}
+                        <Pressable
+                            style={{
+                                position: 'absolute',
+                                top: 15,
+                                left: 20,
+                                height: 40,
+                                width: 40,
+                                backgroundColor: '#fff',
+                                zIndex: 9999999,
+                                borderRadius: moderateScale(40),
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                elevation:4
+                            }}
+                            onPress={() => {
+                                onClose()
+                            }}
+                        >
+                            <Icon name="back" type="AntDesign" color="#000" size={24} />
+                        </Pressable>
+                
+                    <View
+                        style={{
+                            flex: 1,
+                        }}>
+                        <View
+                            style={{
+                                position: 'absolute',
+                                width: 40,
+                                height: 40,
+                                // backgroundColor: "#fff",
+                                zIndex: 28998,
+                                top: '50%',
+                                left: '50%',
+                                transform: [{ translateX: -20 }, { translateY: -20 }],
+                            }}>
+                            <Image
+                                resizeMode="contain"
+                                style={{
+                                    width: 40,
+                                    height: 40,
+                                }}
+                                source={{
+                                    uri: 'https://cdn-icons-png.flaticon.com/512/149/149059.png',
+                                }}
+                            />
+
+                        </View>
+                        <Pressable
+                            style={{
+                                position: 'absolute',
+                                bottom: 15,
+                                right: 20,
+                                height: 30,
+                                width: 30,
+                                backgroundColor: '#fff',
+                                zIndex: 9999999,
+                                borderRadius: moderateScale(5),
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                elevation:4
+
+                            }}
+                            onPress={() => {
+                                sendLocation()
+                            }}
+                        >
+                            <Icon name="my-location" type="MaterialIcon" color="#000" size={24} />
+                        </Pressable>
+                        {Reigoin.latitude && Reigoin?.longitude ? (
+                            <MapView
+                                onPress={e => console.log('tyytytyty', e)}
+                                style={{
+                                    position: 'absolute',
+                                    top: 0,
+                                    left: 0,
+                                    bottom: 0,
+                                    right: 0,
+                                    // zIndex:99999999
+                                }}
+                                provider={MapView.PROVIDER_GOOGLE}
+                                initialRegion={Reigoin}
+                                region={Reigoin}
+                                onRegionChangeComplete={e => {
+                                    // console.log(e)
+                                    setReigoin(e);
+                                }}>
+
+                            </MapView>
+                        ) : (
+                            <ActivityIndicator />
+                        )}
+
+
+
+                    </View>
+
+                    <View style={{
+                        height: moderateScale(200),
+                        backgroundColor: '#fff',
+                        // justifyContent:'center',
+                        // alignItems:'center',
+                        width: '100%'
+                    }}>
+                        <View style={{
+                            height:moderateScale(45),
+                            width:'100%',
+                            backgroundColor:'#fff',
+                            borderBottomWidth:0.5,
+                            borderColor: 'grey',
+                            justifyContent:'center',
+                            paddingHorizontal:moderateScale(15)
+                        }}>
+                            <Text style={{fontSize:moderateScale(16),fontFamily:FONTS.bold,color:'#000'}}>Select Location</Text>
+                        </View>
+                        <View style={{
+                             borderBottomWidth:0.5,
+                             borderColor: 'grey',
+                             paddingVertical:moderateScale(10)
+                        }}>
+                        <Text style={{fontSize:moderateScale(13),fontFamily:FONTS.semibold,marginHorizontal:moderateScale(15)}}>Car Location</Text>
+                        
+                        <View
+                            style={{
+                                width: '100%',
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                height: moderateScale(55),
+
+                                // elevation: 1,
+                            }}>
+                            <AntDesign
+                                name="checkcircle"
+                                color={'green'}
+                                onPress={() => {
+                                    setModalVisible(true);
+                                }}
+                                style={{
+                                    marginLeft: 10,
+                                    marginRight:5
+                                }}
+                                size={22}
+                            />
+
+                            {Address == '' ? (
+                                <View
+                                    style={{
+                                        flex: 1,
+                                    }}>
+                                    <ActivityIndicator
+                                        style={{ alignSelf: 'center' }}
+                                        color={'#000'}
+                                    />
+                                </View>
+                            ) : (
+                                <Text
+                                    numberOfLines={2}
+                                    style={{
+                                        color: '#000',
+                                        fontSize: 14,
+                                        flex: 1,
+                                        paddingHorizontal: 5,
+                                        maxWidth: '100%',
+                                        fontFamily:FONTS.semibold
+                                    }}>
+                                    {Address}
+                                </Text>
+                            )}
+
+                        </View>
+                        </View>
+                        <Pressable 
+                        onPress={()=>{
+                            submitAddress()
+                        }}
+                        style={{
+                            height:moderateScale(35),
+                            width:'85%',
+                            alignSelf:'center',
+                            backgroundColor:COLORS.primaryThemeColor,
+                            alignItems:'center',
+                            justifyContent:'center',
+                            borderRadius:moderateScale(5),
+                            marginVertical:moderateScale(10)
+                        }}>
+                        <Text style={{fontSize:moderateScale(14),
+                            fontFamily:FONTS.semibold,color:'#fff',
+                            marginHorizontal:moderateScale(15)}}>Confirm</Text>
+
+                        </Pressable>
+                    </View>
+                    
+                </View>
+            ) : (
+                <View
+                    style={{
+                        flex: 1,
+                        backgroundColor: '#fff',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                    }}>
+                    <ActivityIndicator color="#000" size={'large'} />
+                </View>
+            )}
+            <Modal
+                        animationType="slide"
+                        transparent={true}
+                        visible={modalVisible}
+                        statusBarTranslucent={true}
+                        onRequestClose={() => {
+                            console.log('Modal has been closed.');
+                            setModalVisible(!modalVisible);
+                        }}>
+                        <>
+                            <GoogleSearch
+                                SearchField={a => SearchField(a)}
+                                onClose={() => setModalVisible(false)}
+                            />
+                        </>
+                    </Modal>
+        </View>
+    );
+};
+
+export default SelectGoogleMap;
+
+const styles = StyleSheet.create({});
